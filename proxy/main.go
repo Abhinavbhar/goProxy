@@ -3,7 +3,13 @@ package main
 import (
 	"fmt"
 	"net"
+	"sync"
 )
+
+var ipBandwidth = make(map[string]int64)
+
+// RWMutex for synchronizing access
+var mu sync.RWMutex
 
 func main() {
 	listener, err := net.Listen("tcp", ":8080")

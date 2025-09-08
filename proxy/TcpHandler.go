@@ -9,7 +9,10 @@ import (
 
 func TcpHandler(conn net.Conn) {
 	defer conn.Close()
-
+	//returns the ip of user
+	Ip := ReturnIp(conn)
+	CheckIp(Ip)
+	// refuse the connection if checkIp returns false
 	reader := bufio.NewReader(conn)
 	Host := ReturnHost(reader)
 	fmt.Println(Host)
@@ -34,4 +37,11 @@ func TcpHandler(conn net.Conn) {
 	}()
 
 	<-done // wait for one direction to fin
+}
+
+// This is a really basic function it can give a common ip if some users are using ip
+// from the same public wifi SO that can conflict for bandwidth
+func ReturnIp(conn net.Conn) string {
+	clientIp := conn.RemoteAddr().String()
+	return clientIp
 }
