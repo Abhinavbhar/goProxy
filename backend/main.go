@@ -26,6 +26,7 @@ func main() {
 	})
 	app.Post("/login", routes.Login)
 	app.Post("/auth/verify", routes.VerifyAuth)
+	app.Get("/allowedips", routes.AllowedIp)
 
 	// Start server on port 3000
 	app.Listen(":3000")

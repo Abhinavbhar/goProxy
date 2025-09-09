@@ -11,7 +11,21 @@ func TcpHandler(conn net.Conn) {
 	defer conn.Close()
 	//returns the ip of user
 	Ip := ReturnIp(conn)
-	CheckIp(Ip)
+	fmt.Println(Ip)
+	if CheckIp(Ip) == false {
+		response := "HTTP/1.1 401 Unauthorized\r\n" +
+			"Content-Type: text/html; charset=utf-8\r\n" +
+			"Connection: close\r\n" +
+			"\r\n" +
+			"<!DOCTYPE html>" +
+			"<html><head><title>Proxy Sign-in Required</title></head>" +
+			"<body style=\"font-family: sans-serif; text-align: center; margin-top: 20%;\">" +
+			"<h2>Please sign in to proxy to continue</h2>" +
+			"</body></html>"
+
+		conn.Write([]byte(response))
+		conn.Close()
+	}
 	// refuse the connection if checkIp returns false
 	reader := bufio.NewReader(conn)
 	Host := ReturnHost(reader)
@@ -42,6 +56,15 @@ func TcpHandler(conn net.Conn) {
 // This is a really basic function it can give a common ip if some users are using ip
 // from the same public wifi SO that can conflict for bandwidth
 func ReturnIp(conn net.Conn) string {
-	clientIp := conn.RemoteAddr().String()
-	return clientIp
+	host, _, err := net.SplitHostPort(conn.RemoteAddr().String())
+	if err != nil {
+		return ""
+	}
+
+	// Normalize IPv6 loopback to IPv4
+	if host == "::1" {
+		host = "127.0.0.1"
+	}
+
+	return host
 }

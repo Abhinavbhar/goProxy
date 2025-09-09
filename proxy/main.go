@@ -4,14 +4,25 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 )
 
-var ipBandwidth = make(map[string]int64)
-
-// RWMutex for synchronizing access
-var mu sync.RWMutex
+var (
+	ipBandwidth = make(map[string]int64)
+	ipMutex     = sync.RWMutex{}
+)
 
 func main() {
+	InitMongo()
+	start := time.Now()
+	var Ips []string = LoadAllowedIp()
+
+	for i := 0; i < len(Ips); i++ {
+		ipBandwidth[Ips[i]] = int64(0)
+	}
+
+	elapsed := time.Since(start)
+	fmt.Println("time take:", elapsed, "to load", len(Ips), "Ips in memory")
 	listener, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		fmt.Printf("Error starting proxy: %v\n", err)

@@ -22,9 +22,10 @@
     "client_id": "59155913835-g12i2ppt5osa025orp0c9ej6amo6t166.apps.googleusercontent.com",
     "scopes": ["openid", "email", "profile"]
   },
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
-  }
+"content_security_policy": {
+  "extension_pages": "script-src 'self';"
+}
+
 }
 
 
