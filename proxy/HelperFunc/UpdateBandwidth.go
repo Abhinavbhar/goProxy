@@ -14,8 +14,6 @@ func UpdateBandwidth() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Replace with your Users collection name
-
 	var updatedCount int
 	var userUpdatedCount int
 
@@ -56,12 +54,6 @@ func UpdateBandwidth() error {
 func StartBandwidthUpdater() {
 	ticker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
-
-	// Run immediately on start
-	if err := UpdateBandwidth(); err != nil {
-		log.Printf("Error in initial bandwidth update: %v", err)
-	}
-
 	// Then run every hour
 	for range ticker.C {
 		if err := UpdateBandwidth(); err != nil {

@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const userEmail = document.getElementById('userEmail');
 
     // Check if user is already logged in
-    const backendUrl = "http://37.27.26.72:3000"
+    const backendUrl = "http://88.198.127.219:3000"
     await checkAuthState();
 
     // Event listeners
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 rules: {
                     singleProxy: {
                         scheme: "http",
-                        host: "37.27.26.72",
+                        host: "88.198.127.219",
                         port: 8080
                     },
                     bypassList: ["localhost", "127.0.0.1"]
