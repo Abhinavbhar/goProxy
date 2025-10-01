@@ -1,31 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "Proxy OAuth Extension",
-  "version": "1.0",
-  "description": "Chrome extension with Google OAuth and proxy setup",
+  "name": "Free Proxy Extension",
+  "version": "1.0.0",
+  "description": "Quick and easy proxy management - no login required",
   "permissions": [
-    "storage",
-    "proxy",
-    "identity"
-  ],
-  "host_permissions": [
-    "*://*/*"
+    "proxy"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Proxy OAuth Extension"
-  },
-  "oauth2": {
-    "client_id": "59155913835-g12i2ppt5osa025orp0c9ej6amo6t166.apps.googleusercontent.com",
-    "scopes": ["openid", "email", "profile"]
-  },
-"content_security_policy": {
-  "extension_pages": "script-src 'self';"
+    "default_title": "Free Proxy Extension"
+  }
 }
-
-}
-
-

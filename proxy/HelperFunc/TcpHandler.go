@@ -2,24 +2,27 @@ package helperfunc
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"net"
+	"sync"
 	"time"
 )
 
 func TcpHandler(conn net.Conn) {
-	defer conn.Close()
+	// Do not close immediately, wait until both goroutines finish
+	// defer conn.Close()
 
 	// Get client IP
 	ip := ReturnIp(conn)
 	if ip == "" {
+		conn.Close()
 		return
 	}
 
 	// Check IP whitelist/blacklist
 	if !CheckIp(ip) {
+		conn.Close()
 		return
 	}
 
@@ -27,6 +30,7 @@ func TcpHandler(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	host := ReturnHost(reader)
 	if host == "" {
+		conn.Close()
 		return
 	}
 
@@ -35,6 +39,7 @@ func TcpHandler(conn net.Conn) {
 	_, err := conn.Write([]byte(firstResponse))
 	if err != nil {
 		fmt.Printf("Error writing response: %v\n", err)
+		conn.Close()
 		return
 	}
 
@@ -42,124 +47,38 @@ func TcpHandler(conn net.Conn) {
 	dest, err := net.DialTimeout("tcp", host, 10*time.Second)
 	if err != nil {
 		fmt.Printf("Error connecting to destination %s: %v\n", host, err)
+		conn.Close()
 		return
 	}
-	defer dest.Close()
 
-	// Create context for coordinating both goroutines
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Ensure cancel is called when function exits
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	// Channel to collect errors from both goroutines
-	errChan := make(chan error, 2)
-
-	// Track total bytes for bandwidth calculation
-	var totalBytes int64
-
-	// Goroutine 1: Copy from client to destination
+	// Client -> Destination
 	go func() {
-		defer cancel() // Cancel context when this direction completes
-
-		n, err := copyWithCancel(ctx, dest, conn)
-
-		// Update bandwidth using your existing mutex
-		IpMutex.Lock()
-		IpBandwidth[ip] += n / 1000 // Convert to KB
-		totalBytes += n
-		IpMutex.Unlock()
-
-		if err != nil && err != io.EOF {
-			fmt.Printf("Error copying client->dest: %v\n", err)
-		}
-
-		errChan <- err
+		defer wg.Done()
+		io.Copy(dest, conn)
 	}()
 
-	// Goroutine 2: Copy from destination to client
+	// Destination -> Client
 	go func() {
-		defer cancel() // Cancel context when this direction completes
-
-		n, err := copyWithCancel(ctx, conn, dest)
-
-		// Update bandwidth using your existing mutex
+		defer wg.Done()
+		bandwidth, _ := io.Copy(conn, dest)
 		IpMutex.Lock()
-		IpBandwidth[ip] += n / 1000 // Convert to KB
-		totalBytes += n
+		IpBandwidth[ip] += bandwidth / 1000
 		IpMutex.Unlock()
-
-		if err != nil && err != io.EOF {
-			fmt.Printf("Error copying dest->client: %v\n", err)
-		}
-
-		errChan <- err
 	}()
 
-	// Wait for both goroutines to complete
-	// This is better than your original <-done which only waited for one
-	for i := 0; i < 2; i++ {
-		select {
-		case <-ctx.Done():
-			// Context cancelled, both goroutines should be finishing
-		case err := <-errChan:
-			if err != nil && err != io.EOF && err != context.Canceled {
-				fmt.Printf("Copy error: %v\n", err)
-			}
-		}
-	}
+	// Wait until both copies finish
+	wg.Wait()
 
-	// Print final bandwidth info
+	// Now safe to close both ends
+	conn.Close()
+	dest.Close()
+
 	IpMutex.RLock()
 	fmt.Printf("Connection closed for IP %s. Total bandwidth: %d KB\n", ip, IpBandwidth[ip])
 	IpMutex.RUnlock()
-}
-
-// copyWithCancel is like io.Copy but can be cancelled via context
-func copyWithCancel(ctx context.Context, dst io.Writer, src io.Reader) (int64, error) {
-	// Use a reasonable buffer size (32KB is good for network operations)
-	buf := make([]byte, 32*1024)
-	var written int64
-
-	for {
-		// Check if context was cancelled before each read
-		select {
-		case <-ctx.Done():
-			return written, ctx.Err()
-		default:
-		}
-
-		// Read with a timeout to make it cancellable
-		if conn, ok := src.(net.Conn); ok {
-			// Set a short read deadline so we can check context regularly
-			conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
-		}
-
-		nr, er := src.Read(buf)
-		if nr > 0 {
-			nw, ew := dst.Write(buf[0:nr])
-			if nw < 0 || nr < nw {
-				nw = 0
-				if ew == nil {
-					ew = fmt.Errorf("invalid write result")
-				}
-			}
-			written += int64(nw)
-			if ew != nil {
-				return written, ew
-			}
-			if nr != nw {
-				return written, io.ErrShortWrite
-			}
-		}
-
-		if er != nil {
-			// Check if it's just a timeout (which is expected due to our deadline)
-			if netErr, ok := er.(net.Error); ok && netErr.Timeout() {
-				continue // Continue the loop to check context
-			}
-			// Real error or EOF
-			return written, er
-		}
-	}
 }
 
 // Your existing ReturnIp function with minor improvements

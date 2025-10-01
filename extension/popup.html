@@ -4,139 +4,203 @@
     <meta charset="utf-8">
     <style>
         body {
-            width: 300px;
-            padding: 20px;
-            font-family: Arial, sans-serif;
+            width: 320px;
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
         }
         
         .container {
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
             text-align: center;
-        }
-        
-        .login-section {
             margin-bottom: 20px;
         }
         
-        .user-section {
-            display: none;
-            margin-bottom: 20px;
+        .header h2 {
+            margin: 0 0 5px 0;
+            font-size: 20px;
+            font-weight: 600;
         }
         
-        .user-info {
-            background: #f5f5f5;
+        .header p {
+            margin: 0;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        
+        .proxy-info {
+            background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .proxy-info .label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        
+        .proxy-info .value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
             margin-bottom: 15px;
         }
         
-        .user-name {
-            font-weight: bold;
-            font-size: 16px;
-            color: #333;
-        }
-        
-        .user-email {
-            color: #666;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        
         button {
-            background: #4285f4;
-            color: white;
+            flex: 1;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            padding: 12px 20px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
-            margin: 5px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         
         button:hover {
-            background: #3367d6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
         }
         
         button:disabled {
-            background: #ccc;
+            opacity: 0.6;
             cursor: not-allowed;
+            transform: none !important;
         }
         
-        .proxy-button {
-            background: #34a853;
+        #addProxyButton {
+            background: #10b981;
+            color: white;
         }
         
-        .proxy-button:hover {
-            background: #2d8f47;
+        #addProxyButton:hover:not(:disabled) {
+            background: #059669;
         }
         
-        .logout-button {
-            background: #ea4335;
+        #removeProxyButton {
+            background: #ef4444;
+            color: white;
         }
         
-        .logout-button:hover {
-            background: #d33b2c;
+        #removeProxyButton:hover:not(:disabled) {
+            background: #dc2626;
         }
         
         .status {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
         }
         
         .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
         }
         
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
         
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 11px;
+            color: #999;
+            border-top: 1px solid #eee;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Login Section -->
-        <div id="loginSection" class="login-section">
-            <h3>Proxy OAuth Extension</h3>
-            <p>Sign in with Google to continue</p>
-            <button id="loginButton">Sign in with Google</button>
-        </div>
-        
-        <!-- User Section -->
-        <div id="userSection" class="user-section">
-            <div class="user-info">
-                <div class="user-name" id="userName"></div>
-                <div class="user-email" id="userEmail"></div>
-            </div>
-            
-            <button id="addProxyButton" class="proxy-button">Add Proxy</button>
-            <button id="removeProxyButton" class="proxy-button">Remove Proxy</button>
-            <button id="logoutButton" class="logout-button">Logout</button>
-        </div>
-        
-        <!-- Status Section -->
-        <div id="statusMessage" class="status" style="display: none;"></div>
+    <div class="header">
+        <h2>🌐 Free Proxy</h2>
+        <p>Quick & Easy Proxy Management</p>
     </div>
-
+    
+    <div class="container">
+        <div class="proxy-info">
+            <div class="label">Proxy Server</div>
+            <div class="value">proxybackend.bhar.xyz:8080</div>
+        </div>
+        
+        <div class="button-group">
+            <button id="addProxyButton">
+                <span>🚀</span> Enable Proxy
+            </button>
+            <button id="removeProxyButton">
+                <span>🛑</span> Disable Proxy
+            </button>
+        </div>
+        
+        <div id="statusMessage" class="status"></div>
+    </div>
+    
+    <div class="footer">
+        Free to use • No login required
+    </div>
+    
     <script src="popup.js"></script>
 </body>
 </html>
